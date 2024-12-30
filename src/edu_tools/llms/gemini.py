@@ -8,11 +8,13 @@ def topic_formt(text: str):
 
     ## Workflow
     - 将输入整理格式后输出
+    - 文本保持通顺
 
     ## Constrains
     - 句子需要通顺无歧义
-    - 输出为纯文本格式
+    - 输出纯文本
     - 数学表达式在无法通过文本表达是,使用 Latex 公式代替
+    - 不使用 Markdown 语法
     """
     prompt_template = ChatPromptTemplate.from_messages(
         [("system", system_template), ("user", "{text}")]

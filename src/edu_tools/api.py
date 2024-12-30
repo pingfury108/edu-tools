@@ -23,5 +23,6 @@ class Topic(BaseModel):
 
 @app.post("/topic/formt")
 def topic_fromt(topic: Topic):
-    print(os.getenv("GOOGLE_API_KEY"))
-    return {"topic": llm_topic_formt(topic.text)}
+    text = llm_topic_formt(topic.text)
+    print(text)
+    return {"topic": text}
