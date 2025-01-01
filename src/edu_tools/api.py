@@ -10,6 +10,7 @@ from edu_tools.llms.gemini import (
     topic_formt as llm_topic_formt,
     topic_answer as llm_topic_answer,
     topic_analysis as llm_topic_analysis,
+    text_format as llm_text_format,
 )
 
 load_dotenv()
@@ -53,5 +54,12 @@ def topic_answer(topic: Topic):
 @app.post("/topic/analysis")
 def topic_answer(topic: Topic):
     text = llm_topic_analysis(topic.text)
+    print(text)
+    return {"topic": text}
+
+
+@app.post("/text/format")
+def text_format(topic: Topic):
+    text = llm_text_format(topic.text)
     print(text)
     return {"topic": text}

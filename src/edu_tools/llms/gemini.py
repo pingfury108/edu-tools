@@ -104,3 +104,29 @@ def topic_analysis(text: str):
 
     response = model.invoke(prompt)
     return response.content
+
+
+def text_format(text: str):
+    system_template = """
+    # Role 我是一个专门用于将文本中的英文符号替换为中文符号的 AI 角色
+
+    ## Workflow
+    - 将输入的文本中的英文符号替换为中文符号
+
+    ## Constrains
+    - 不使用 Markdown 语法
+    - 输出纯文本
+    - 不替换数学表达式中的英文符号
+    - 数字之间的 `:` 不替换
+
+    ## Example
+
+    """
+    prompt_template = ChatPromptTemplate.from_messages(
+        [("system", system_template), ("user", "{text}")]
+    )
+    prompt = prompt_template.invoke({"text": text})
+    model = ChatGoogleGenerativeAI(model=ModelName)
+
+    response = model.invoke(prompt)
+    return response.content
