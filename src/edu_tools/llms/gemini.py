@@ -5,6 +5,19 @@ from langchain_core.prompts import ChatPromptTemplate
 ModelName = "gemini-1.5-flash-latest"
 
 
+def fix_text(text, image_url):
+    texts = [
+        {"type": "text", "text": text},
+    ]
+    if image_url:
+        texts = [
+            *texts,
+            {"type": "image_url", "image_url": image_url},
+        ]
+
+    return texts
+
+
 def topic_formt(text: str):
     system_template = """
     # Role 你是一个整理文本格式的AI角色
@@ -44,7 +57,7 @@ def topic_formt(text: str):
     return response.content
 
 
-def topic_answer(text: str):
+def topic_answer(text: str, image_url: str):
     system_template = """
     # Role 我是一个专业的小学数学老师, 用来解答小学数学题的 AI 角色
 
@@ -59,6 +72,7 @@ def topic_answer(text: str):
     - 不要出现人称名称
     - 标点符号使用中文符号
     - 输出纯文本
+    - 计算式也需要计算步骤
     - 数学表达式,使用 Latex 公式
     - 计算式子中间不要带单位
     - 分数需要用 Latex 公式
@@ -71,14 +85,14 @@ def topic_answer(text: str):
     prompt_template = ChatPromptTemplate.from_messages(
         [("system", system_template), ("user", "{text}")]
     )
-    prompt = prompt_template.invoke({"text": text})
+    prompt = prompt_template.invoke({"text": fix_text(text, image_url)})
     model = ChatGoogleGenerativeAI(model=ModelName)
 
     response = model.invoke(prompt)
     return response.content
 
 
-def topic_analysis(text: str):
+def topic_analysis(text: str, image_url: str):
     system_template = """
     # Role 我是一个专业的小学数学老师, 用来分析数学题目,并给出考查,解题思路的 AI 角色
 
@@ -103,13 +117,15 @@ def topic_analysis(text: str):
     - 余数使用 `……` 间隔
     - 不能只有公式计算
     - 要有文字思路描述
-    - 计算式子中间不要带单位
+    - 计算式子中间不要有单位, 例如: 厘米,米,元,之类的词
+    - 行之间不要有空行
+    - 不要出现,'首先' '然后' '最后'之类的词
 
     """
     prompt_template = ChatPromptTemplate.from_messages(
         [("system", system_template), ("user", "{text}")]
     )
-    prompt = prompt_template.invoke({"text": text})
+    prompt = prompt_template.invoke({"text": fix_text(text, image_url)})
     model = ChatGoogleGenerativeAI(model=ModelName)
 
     response = model.invoke(prompt)
@@ -141,7 +157,6 @@ def text_format(text: str):
     - 数字之间的运算符或分隔符保持英文格式
 
     ## 输出要求
-
     - 仅输出转换后的纯文本
     - 不添加任何额外的解释或标记
     - 不对原文进行任何内容上的修改或补充

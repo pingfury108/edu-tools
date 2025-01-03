@@ -1,9 +1,7 @@
-import os
-
 from dotenv import load_dotenv
-from typing import Union
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from typing import Optional
 from pydantic import BaseModel
 
 from edu_tools.llms.gemini import (
@@ -35,6 +33,7 @@ def read_root():
 
 class Topic(BaseModel):
     text: str
+    image_url: Optional[str] = None
 
 
 @app.post("/topic/formt")
@@ -46,14 +45,14 @@ def topic_fromt(topic: Topic):
 
 @app.post("/topic/answer")
 def topic_answer(topic: Topic):
-    text = llm_topic_answer(topic.text)
+    text = llm_topic_answer(topic.text, topic.image_url or "")
     print(text)
     return {"topic": text}
 
 
 @app.post("/topic/analysis")
-def topic_answer(topic: Topic):
-    text = llm_topic_analysis(topic.text)
+def topic_analysis(topic: Topic):
+    text = llm_topic_analysis(topic.text, topic.image_url or "")
     print(text)
     return {"topic": text}
 
