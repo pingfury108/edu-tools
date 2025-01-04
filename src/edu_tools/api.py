@@ -26,6 +26,11 @@ app.add_middleware(
 )
 
 
+def remove_empty_lines_from_string(text):
+    lines = [line for line in text.splitlines() if line.strip()]
+    return "\n".join(lines)
+
+
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
@@ -40,21 +45,21 @@ class Topic(BaseModel):
 def topic_fromt(topic: Topic):
     text = llm_topic_formt(topic.text)
     print(text)
-    return {"topic": text}
+    return {"topic": remove_empty_lines_from_string(text)}
 
 
 @app.post("/topic/answer")
 def topic_answer(topic: Topic):
     text = llm_topic_answer(topic.text, topic.image_url or "")
     print(text)
-    return {"topic": text}
+    return {"topic": remove_empty_lines_from_string(text)}
 
 
 @app.post("/topic/analysis")
 def topic_analysis(topic: Topic):
     text = llm_topic_analysis(topic.text, topic.image_url or "")
     print(text)
-    return {"topic": text}
+    return {"topic": remove_empty_lines_from_string(text)}
 
 
 @app.post("/text/format")
