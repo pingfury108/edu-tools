@@ -18,6 +18,13 @@ def fix_text(text, image_url):
     return texts
 
 
+def gemini_run(prompt):
+    model = ChatGoogleGenerativeAI(model=ModelName)
+
+    response = model.invoke(prompt)
+    return response.content
+
+
 def topic_formt(text: str):
     system_template = """
     # Role 你是一个整理文本格式的AI角色

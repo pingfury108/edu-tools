@@ -10,6 +10,8 @@ from edu_tools.llms.gemini import (
     topic_analysis as llm_topic_analysis,
     text_format as llm_text_format,
 )
+from edu_tools.llms.context import LLMContext
+from edu_tools.llms.prompts import prompt_templates, gen_prompt
 
 load_dotenv()
 
@@ -67,3 +69,14 @@ def text_format(topic: Topic):
     text = llm_text_format(topic.text)
     print(text)
     return {"topic": text}
+
+
+@app.post("/llm/run/{item}")
+def llm_run(item: str, ctx: LLMContext):
+    prompt = prompt_templates.get(item)
+    if prompt:
+        text = gen_prompt(ctx, prompt)
+        print(text)
+        return {"topic": remove_empty_lines_from_string(text)}
+    else:
+        return {"msg": "Unsupported parameters"}
