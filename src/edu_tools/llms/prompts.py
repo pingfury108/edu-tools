@@ -1,5 +1,5 @@
 from langchain_core.prompts import ChatPromptTemplate
-
+from langchain.schema import SystemMessage, HumanMessage
 from edu_tools.llms.context import LLMContext
 
 topic_format_prompt_template = (
@@ -31,8 +31,6 @@ topic_format_prompt_template = (
     输出: $S_2 = 18 \times 20$\n$= 360$
 """,
     """
-    ## topic
-    {topic}
     """,
 )
 
@@ -40,9 +38,8 @@ topic_format_prompt_template = (
 topic_answer_prompt_template = (
     """# Role 我是一个专业的小学数学老师, 用来解答小学数学题的 AI 角色
 
-
     ## Workflow
-    - 根据 topic 中描述的问答题目内容，给出题目简短计算过程，和正确答案, 不需要太多文字表述
+    - 根据 topic 描述的问答题目内容，给出题目简短计算过程，和正确答案, 不需要太多文字表述
 
     ## Constrains
     - 不使用 Markdown 语法
@@ -60,8 +57,7 @@ topic_answer_prompt_template = (
     - 余数使用 `……` 间隔
     - 不能像有 `$0.72 \times \frac{{3}}{{8}} = 0.72 \times 0.375 = 0.27$ `这样的公式, 要这样的 `$0.72 \times \frac{{3}}{{8}}$\n$= 0.72 \times 0.375$\n $= 0.27$`
     """,
-    """
-    ## topic
+    """## topic
     {topic}
     """,
 )
@@ -105,12 +101,6 @@ topic_analysis_prompt_template = (
 
 
 def gen_prompt(ctx: LLMContext, prompt_template):
-    template = ChatPromptTemplate.from_messages(
-        [
-            ("system", prompt_template[0]),
-            ("user", prompt_template[1]),
-        ]
-    )
     topic = {"type": "text", "topic": ctx.topic}
     if ctx.image_url:
         topic = [
@@ -118,8 +108,12 @@ def gen_prompt(ctx: LLMContext, prompt_template):
             {"type": "image_url", "image_url": ctx.image_url},
         ]
 
+    template = ChatPromptTemplate.from_messages(
+        [("system", prompt_template[0]), ("user", prompt_template[1])]
+    )
+
     return template.invoke(
-        {"answer": ctx.answer, "topic": ctx.topic, "analysis": ctx.analysis}
+        {"answer": ctx.answer, "topic": topic, "analysis": ctx.analysis}
     )
 
 

@@ -9,6 +9,7 @@ from edu_tools.llms.gemini import (
     topic_answer as llm_topic_answer,
     topic_analysis as llm_topic_analysis,
     text_format as llm_text_format,
+    gemini_run,
 )
 from edu_tools.llms.context import LLMContext
 from edu_tools.llms.prompts import prompt_templates, gen_prompt
@@ -75,7 +76,8 @@ def text_format(topic: Topic):
 def llm_run(item: str, ctx: LLMContext):
     prompt = prompt_templates.get(item)
     if prompt:
-        text = gen_prompt(ctx, prompt)
+        run_prompt = gen_prompt(ctx, prompt)
+        text = gemini_run(run_prompt)
         print(text)
         return {"topic": remove_empty_lines_from_string(text)}
     else:
