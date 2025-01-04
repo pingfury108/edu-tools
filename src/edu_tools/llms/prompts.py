@@ -30,7 +30,9 @@ topic_format_prompt_template = (
     输入: $S_2 = 18 \times 20 = 360$
     输出: $S_2 = 18 \times 20$\n$= 360$
 """,
-    """
+    """## topic
+    {topic}
+
     """,
 )
 
@@ -96,6 +98,7 @@ topic_analysis_prompt_template = (
     {topic}
 
     ## answer
+    {answer}
     """,
 )
 
