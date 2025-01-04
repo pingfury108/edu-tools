@@ -29,8 +29,16 @@ app.add_middleware(
 )
 
 
+def replace_text(text):
+    text_list = [("乘以", "乘"), ("除以", "除")]
+    txt = text
+    for t in text_list:
+        txt = txt.replace(t[0], t[1])
+    return txt
+
+
 def remove_empty_lines_from_string(text):
-    lines = [line for line in text.splitlines() if line.strip()]
+    lines = [replace_text(line) for line in text.splitlines() if line.strip()]
     return "\n".join(lines)
 
 
