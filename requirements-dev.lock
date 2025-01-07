@@ -135,6 +135,7 @@ httplib2==0.22.0
 httptools==0.6.4
     # via uvicorn
 httpx==0.27.2
+    # via edu-tools
     # via fastapi
     # via langchain-google-vertexai
     # via langsmith
