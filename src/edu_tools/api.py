@@ -1,5 +1,5 @@
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional
 from pydantic import BaseModel
@@ -42,35 +42,9 @@ def remove_empty_lines_from_string(text):
     return "\n".join(lines)
 
 
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
-
-
 class Topic(BaseModel):
     text: str
     image_url: Optional[str] = None
-
-
-@app.post("/topic/formt")
-def topic_fromt(topic: Topic):
-    text = llm_topic_formt(topic.text)
-    print(text)
-    return {"topic": remove_empty_lines_from_string(text)}
-
-
-@app.post("/topic/answer")
-def topic_answer(topic: Topic):
-    text = llm_topic_answer(topic.text, topic.image_url or "")
-    print(text)
-    return {"topic": remove_empty_lines_from_string(text)}
-
-
-@app.post("/topic/analysis")
-def topic_analysis(topic: Topic):
-    text = llm_topic_analysis(topic.text, topic.image_url or "")
-    print(text)
-    return {"topic": remove_empty_lines_from_string(text)}
 
 
 @app.post("/text/format")
@@ -81,7 +55,12 @@ def text_format(topic: Topic):
 
 
 @app.post("/llm/run/{item}")
-def llm_run(item: str, ctx: LLMContext):
+def llm_run(item: str, ctx: LLMContext, req: Request):
+    key = req.headers.get("X-Pfy-Key")
+    if key:  # 如果没有密钥，则继续处理请求
+        print(key)
+    else:
+        return {"topic": "无权访问"}
     prompt = prompt_templates.get(item)
     if prompt:
         run_prompt = gen_prompt(ctx, prompt)
