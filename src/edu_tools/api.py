@@ -1,3 +1,4 @@
+import logging
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -5,16 +6,18 @@ from typing import Optional
 from pydantic import BaseModel
 
 from edu_tools.llms.gemini import (
-    topic_formt as llm_topic_formt,
-    topic_answer as llm_topic_answer,
-    topic_analysis as llm_topic_analysis,
     text_format as llm_text_format,
     gemini_run,
 )
 from edu_tools.llms.context import LLMContext
 from edu_tools.llms.prompts import prompt_templates, gen_prompt
+from edu_tools.pb import auth_key_is_ok
 
 load_dotenv()
+
+logging.basicConfig(level=logging.DEBUG)
+
+log = logging.getLogger(__name__)
 
 app = FastAPI()
 
@@ -50,22 +53,22 @@ class Topic(BaseModel):
 @app.post("/text/format")
 def text_format(topic: Topic):
     text = llm_text_format(topic.text)
-    print(text)
     return {"topic": text}
 
 
 @app.post("/llm/run/{item}")
 def llm_run(item: str, ctx: LLMContext, req: Request):
     key = req.headers.get("X-Pfy-Key")
-    if key:  # 如果没有密钥，则继续处理请求
-        print(key)
+    if key:
+        ok = auth_key_is_ok(key)
+        if not ok:
+            return {"topic": "账户已过期"}
     else:
         return {"topic": "无权访问"}
     prompt = prompt_templates.get(item)
     if prompt:
         run_prompt = gen_prompt(ctx, prompt)
         text = gemini_run(run_prompt)
-        print(text)
         return {"topic": remove_empty_lines_from_string(text)}
     else:
         return {"msg": "Unsupported parameters"}

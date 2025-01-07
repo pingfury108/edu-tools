@@ -19,7 +19,6 @@ def fix_text(text, image_url):
 
 
 def gemini_run(prompt):
-    print(prompt.to_messages())
     model = ChatGoogleGenerativeAI(model=ModelName)
 
     response = model.invoke(prompt)
