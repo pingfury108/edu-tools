@@ -1,3 +1,4 @@
+import os
 import logging
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
@@ -5,10 +6,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional
 from pydantic import BaseModel
 
-from edu_tools.llms.gemini import (
-    text_format as llm_text_format,
-    gemini_run,
-)
+from edu_tools.llms.gemini import gemini_run, PROVIDE_NAME as gemini_provide
+from edu_tools.llms.deepseek import deepseek_run, PROVIDE_NAME as deepseek_provide
 from edu_tools.llms.context import LLMContext
 from edu_tools.llms.prompts import prompt_templates, gen_prompt
 from edu_tools.pb import auth_key_is_ok
@@ -18,6 +17,8 @@ load_dotenv()
 logging.basicConfig(level=logging.DEBUG)
 
 log = logging.getLogger(__name__)
+
+llm_provide = os.getenv("LLM_PROVIDE", gemini_provide)
 
 app = FastAPI()
 
@@ -50,12 +51,6 @@ class Topic(BaseModel):
     image_url: Optional[str] = None
 
 
-@app.post("/text/format")
-def text_format(topic: Topic):
-    text = llm_text_format(topic.text)
-    return {"topic": text}
-
-
 @app.post("/llm/run/{item}")
 def llm_run(item: str, ctx: LLMContext, req: Request):
     key = req.headers.get("X-Pfy-Key")
@@ -68,7 +63,10 @@ def llm_run(item: str, ctx: LLMContext, req: Request):
     prompt = prompt_templates.get(item)
     if prompt:
         run_prompt = gen_prompt(ctx, prompt)
-        text = gemini_run(run_prompt)
+        llm_fun = gemini_run
+        if llm_provide == deepseek_provide:
+            llm_fun = deepseek_run
+        text = llm_fun(run_prompt)
         return {"topic": remove_empty_lines_from_string(text)}
     else:
         return {"msg": "Unsupported parameters"}
