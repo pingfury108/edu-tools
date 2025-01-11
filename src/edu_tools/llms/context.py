@@ -7,3 +7,7 @@ class LLMContext(BaseModel):
     image_url: Optional[str] = None
     answer: Optional[str] = None
     analysis: Optional[str] = None
+
+
+class OCRContext(BaseModel):
+    image_data: str

@@ -6,11 +6,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional
 from pydantic import BaseModel
 
-from edu_tools.llms.gemini import gemini_run, PROVIDE_NAME as gemini_provide
+from edu_tools.llms.gemini import gemini_run, gemini_ocr, PROVIDE_NAME as gemini_provide
 from edu_tools.llms.deepseek import deepseek_run, PROVIDE_NAME as deepseek_provide
-from edu_tools.llms.context import LLMContext
+from edu_tools.llms.context import LLMContext, OCRContext
 from edu_tools.llms.prompts import prompt_templates, gen_prompt
 from edu_tools.pb import auth_key_is_ok
+
+from edu_tools.utils import save_base64_image
 
 load_dotenv()
 
@@ -70,3 +72,12 @@ def llm_run(item: str, ctx: LLMContext, req: Request):
         return {"topic": remove_empty_lines_from_string(text)}
     else:
         return {"msg": "Unsupported parameters"}
+
+
+@app.post("/llm/ocr")
+def ocr(ctx: OCRContext):
+    tf = save_base64_image(ctx.image_data)
+    print(tf)
+    text = gemini_ocr(tf)
+    os.remove(tf)
+    return {"text": text}
