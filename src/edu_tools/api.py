@@ -75,9 +75,15 @@ def llm_run(item: str, ctx: LLMContext, req: Request):
 
 
 @app.post("/llm/ocr")
-def ocr(ctx: OCRContext):
+def ocr(ctx: OCRContext, req: Request):
+    key = req.headers.get("X-Pfy-Key")
+    if key:
+        ok = auth_key_is_ok(key)
+        if not ok:
+            return {"topic": "账户已过期"}
+    else:
+        return {"topic": "无权访问"}
     tf = save_base64_image(ctx.image_data)
-    print(tf)
     text = gemini_ocr(tf)
     os.remove(tf)
     return {"text": text}
