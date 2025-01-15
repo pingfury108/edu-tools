@@ -7,7 +7,11 @@ from typing import Optional
 from pydantic import BaseModel
 
 from edu_tools.llms.gemini import gemini_run, gemini_ocr, PROVIDE_NAME as gemini_provide
-from edu_tools.llms.deepseek import deepseek_run, PROVIDE_NAME as deepseek_provide
+from edu_tools.llms.deepseek import (
+    deepseek_run,
+    PROVIDE_NAME as deepseek_provide,
+    deepseek_math_fromat,
+)
 from edu_tools.llms.context import LLMContext, OCRContext
 from edu_tools.llms.prompts import prompt_templates, gen_prompt
 from edu_tools.pb import auth_key_is_ok
@@ -16,7 +20,7 @@ from edu_tools.utils import save_base64_image
 
 load_dotenv()
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=int(os.getenv("LOG_LEVEL", 20)))
 
 log = logging.getLogger(__name__)
 
@@ -69,6 +73,7 @@ def llm_run(item: str, ctx: LLMContext, req: Request):
         if llm_provide == deepseek_provide:
             llm_fun = deepseek_run
         text = llm_fun(run_prompt)
+        text = deepseek_math_fromat(text)
         return {"topic": remove_empty_lines_from_string(text)}
     else:
         return {"msg": "Unsupported parameters"}

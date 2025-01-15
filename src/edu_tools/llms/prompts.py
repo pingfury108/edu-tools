@@ -1,5 +1,4 @@
 from langchain_core.prompts import ChatPromptTemplate
-from langchain.schema import SystemMessage, HumanMessage
 from edu_tools.llms.context import LLMContext
 
 topic_format_prompt_template = (

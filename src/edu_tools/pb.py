@@ -20,7 +20,7 @@ def auth_key_is_ok(key) -> bool:
         return False
 
     data = r.json()
-    log.debug(data)
+    log.info(data)
     _ = data.get("id")
     exp_time = data.get("exp_time")
 

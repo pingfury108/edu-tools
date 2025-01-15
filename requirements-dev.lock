@@ -180,10 +180,13 @@ langchain-core==0.3.29
     # via langchain-community
     # via langchain-google-genai
     # via langchain-google-vertexai
+    # via langchain-openai
     # via langchain-text-splitters
 langchain-google-genai==2.0.7
     # via edu-tools
 langchain-google-vertexai==2.0.9
+    # via edu-tools
+langchain-openai==0.3.0
     # via edu-tools
 langchain-text-splitters==0.3.4
     # via langchain
@@ -215,6 +218,7 @@ numpy==2.2.1
     # via streamlit
 openai==1.59.6
     # via edu-tools
+    # via langchain-openai
 orjson==3.10.12
     # via langsmith
 packaging==24.2
@@ -294,6 +298,8 @@ pyyaml==6.0.2
 referencing==0.35.1
     # via jsonschema
     # via jsonschema-specifications
+regex==2024.11.6
+    # via tiktoken
 requests==2.32.3
     # via google-api-core
     # via google-cloud-bigquery
@@ -303,6 +309,7 @@ requests==2.32.3
     # via langsmith
     # via requests-toolbelt
     # via streamlit
+    # via tiktoken
 requests-toolbelt==1.0.0
     # via langsmith
 rich==13.9.4
@@ -340,6 +347,8 @@ tenacity==9.0.0
     # via langchain-community
     # via langchain-core
     # via streamlit
+tiktoken==0.8.0
+    # via langchain-openai
 toml==0.10.2
     # via streamlit
 tornado==6.4.2
