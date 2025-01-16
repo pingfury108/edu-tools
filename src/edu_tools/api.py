@@ -73,7 +73,7 @@ def llm_run(item: str, ctx: LLMContext, req: Request):
         if llm_provide == deepseek_provide:
             llm_fun = deepseek_run
         text = llm_fun(run_prompt)
-        text = deepseek_math_fromat(text)
+        log.info(deepseek_math_fromat(text))
         return {"topic": remove_empty_lines_from_string(text)}
     else:
         return {"msg": "Unsupported parameters"}
