@@ -84,6 +84,7 @@ topic_analysis_prompt_template = (
     - 不要有小学数学阶段以外的术语,概念
     - 不要出现人称名称
     - 以"故答案为：答案。"结尾, "答案"题目的答案,并非 "答案"文字, 多个答案使,使用 '；'间隔
+    - 单位要有括号包裹, 例如 (米), (元),等等
     - 标点符号使用中文符号
     - 输出纯文本
     - 分数需要用 Latex 公式
@@ -103,6 +104,28 @@ topic_analysis_prompt_template = (
 
     ## answer
     {answer}
+    """,
+)
+
+topic_complete_prompt_template = (
+    """# Role: 我是一个专业的小学数学老师, 用来补全残缺的数学题目的 AI 角色
+    ## Goals: 将输入中残缺的数学题目补全完整
+
+    ## Constrains:
+    - 逻辑通顺
+    - 知识范围: 小学数学
+    - 只返回补全后的题目
+
+    ## Workflows
+    - 补全 {topic} 中残缺的数学题目
+
+    ## outputs:
+    - text
+    - no markdown
+    """,
+    """
+    ## topic
+    {topic}
     """,
 )
 
@@ -128,4 +151,5 @@ prompt_templates = {
     "topic_format": topic_format_prompt_template,
     "topic_answer": topic_answer_prompt_template,
     "topic_analysis": topic_analysis_prompt_template,
+    "topic_complete": topic_complete_prompt_template,
 }

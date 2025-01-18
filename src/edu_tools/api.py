@@ -72,6 +72,7 @@ def llm_run(item: str, ctx: LLMContext, req: Request):
         llm_fun = gemini_run
         if llm_provide == deepseek_provide:
             llm_fun = deepseek_run
+        log.debug(run_prompt)
         text = llm_fun(run_prompt)
         # log.info(deepseek_math_fromat(text))
         return {"topic": remove_empty_lines_from_string(text)}
