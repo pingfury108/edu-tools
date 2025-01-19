@@ -17,6 +17,8 @@ dependencies = [
     "langchain-community>=0.3.14",
     "google-generativeai>=0.8.3",
     "langchain-openai>=0.3.0",
+    "cozepy>=0.10.3",
+    "opendal>=0.45.14",
 ]
 readme = "README.md"
 requires-python = ">= 3.8"

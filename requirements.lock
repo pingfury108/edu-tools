@@ -30,6 +30,8 @@ attrs==24.3.0
     # via aiohttp
     # via jsonschema
     # via referencing
+authlib==1.4.0
+    # via cozepy
 blinker==1.9.0
     # via streamlit
 cachetools==5.5.0
@@ -39,6 +41,8 @@ certifi==2024.12.14
     # via httpcore
     # via httpx
     # via requests
+cffi==1.17.1
+    # via cryptography
 charset-normalizer==3.4.1
     # via requests
 click==8.1.8
@@ -46,9 +50,14 @@ click==8.1.8
     # via streamlit
     # via typer
     # via uvicorn
+cozepy==0.10.3
+    # via edu-tools
+cryptography==44.0.0
+    # via authlib
 dataclasses-json==0.6.7
     # via langchain-community
 distro==1.9.0
+    # via cozepy
     # via openai
 dnspython==2.7.0
     # via email-validator
@@ -142,6 +151,7 @@ httplib2==0.22.0
 httptools==0.6.4
     # via uvicorn
 httpx==0.27.2
+    # via cozepy
     # via edu-tools
     # via fastapi
     # via langchain-google-vertexai
@@ -219,6 +229,8 @@ numpy==2.2.1
 openai==1.59.6
     # via edu-tools
     # via langchain-openai
+opendal==0.45.14
+    # via edu-tools
 orjson==3.10.12
     # via langsmith
 packaging==24.2
@@ -258,7 +270,10 @@ pyasn1==0.6.1
     # via rsa
 pyasn1-modules==0.4.1
     # via google-auth
+pycparser==2.22
+    # via cffi
 pydantic==2.9.2
+    # via cozepy
     # via fastapi
     # via google-cloud-aiplatform
     # via google-generativeai
@@ -361,6 +376,7 @@ typer==0.15.1
 typing-extensions==4.12.2
     # via altair
     # via anyio
+    # via cozepy
     # via fastapi
     # via google-generativeai
     # via langchain-core
@@ -388,6 +404,7 @@ uvloop==0.21.0
 watchfiles==1.0.3
     # via uvicorn
 websockets==14.1
+    # via cozepy
     # via uvicorn
 yarl==1.18.3
     # via aiohttp

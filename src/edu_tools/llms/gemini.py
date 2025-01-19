@@ -1,7 +1,7 @@
 import os
+import google.generativeai as genai
 from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
-import google.generativeai as genai
 
 load_dotenv()
 

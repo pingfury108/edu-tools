@@ -14,8 +14,9 @@ from edu_tools.llms.deepseek import (
 )
 from edu_tools.llms.context import LLMContext, OCRContext
 from edu_tools.llms.prompts import prompt_templates, gen_prompt
-from edu_tools.pb import auth_key_is_ok
+from edu_tools.llms.volces import doubo_orc
 
+from edu_tools.pb import auth_key_is_ok
 from edu_tools.utils import save_base64_image
 
 load_dotenv()
@@ -90,6 +91,8 @@ def ocr(ctx: OCRContext, req: Request):
     else:
         return {"topic": "无权访问"}
     tf = save_base64_image(ctx.image_data)
-    text = gemini_ocr(tf)
+    # text = gemini_ocr(tf)
+    text = doubo_orc(tf)
+
     os.remove(tf)
     return {"text": text}
