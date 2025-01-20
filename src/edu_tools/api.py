@@ -10,14 +10,13 @@ from edu_tools.llms.gemini import gemini_run, gemini_ocr, PROVIDE_NAME as gemini
 from edu_tools.llms.deepseek import (
     deepseek_run,
     PROVIDE_NAME as deepseek_provide,
-    deepseek_math_fromat,
 )
 from edu_tools.llms.context import LLMContext, OCRContext
 from edu_tools.llms.prompts import prompt_templates, gen_prompt
-from edu_tools.llms.volces import doubo_orc
 
 from edu_tools.pb import auth_key_is_ok
 from edu_tools.utils import save_base64_image
+from edu_tools.llms.dify import dify_ocr
 
 load_dotenv()
 
@@ -41,7 +40,7 @@ app.add_middleware(
 
 
 def replace_text(text):
-    text_list = [("乘以", "乘"), ("除以", "除")]
+    text_list = [("乘以", "乘")]
     txt = text
     for t in text_list:
         txt = txt.replace(t[0], t[1])
@@ -91,8 +90,14 @@ def ocr(ctx: OCRContext, req: Request):
     else:
         return {"topic": "无权访问"}
     tf = save_base64_image(ctx.image_data)
-    # text = gemini_ocr(tf)
-    text = doubo_orc(tf)
+    text = ""
+    try:
+        # text = gemini_ocr(tf)
+        text = dify_ocr(tf, key)
+        # text = ""
+    except Exception as e:
+        log.error(f"ocr: {e}")
+    finally:
+        os.remove(tf)
 
-    os.remove(tf)
     return {"text": text}
