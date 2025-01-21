@@ -26,7 +26,7 @@ ocr_prompt = """
 ## Constrains:
 - 只输出识别的文本
 - 不输出其他内容
-- 数学表达式使用 Latex 公式, 并使用
+- 数学表达式使用 Latex 公式, 并使用 $ 将公式前后包裹
 
 ## outputs:
 - text
