@@ -16,7 +16,7 @@ from edu_tools.llms.prompts import prompt_templates, gen_prompt
 
 from edu_tools.pb import auth_key_is_ok
 from edu_tools.utils import save_base64_image
-from edu_tools.llms.dify import dify_ocr
+from edu_tools.llms.dify import dify_ocr, dify_math_run
 
 load_dotenv()
 
@@ -68,13 +68,20 @@ def llm_run(item: str, ctx: LLMContext, req: Request):
         return {"topic": "无权访问"}
     prompt = prompt_templates.get(item)
     if prompt:
+        if (
+            item in ["topic_answer", "topic_analysis"]
+            and ctx.image_data
+            and ctx.image_data.strip() != ""
+        ):
+            text = dify_math_run(ctx, key)
+            return {"topic": remove_empty_lines_from_string(text)}
         run_prompt = gen_prompt(ctx, prompt)
         llm_fun = gemini_run
         if llm_provide == deepseek_provide:
             llm_fun = deepseek_run
             log.debug(run_prompt)
-            text = llm_fun(run_prompt)
-            # log.info(deepseek_math_fromat(text))
+        text = llm_fun(run_prompt)
+        # log.info(deepseek_math_fromat(text))
         return {"topic": remove_empty_lines_from_string(text)}
     else:
         return {"msg": "Unsupported parameters"}
