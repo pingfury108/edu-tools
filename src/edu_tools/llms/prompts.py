@@ -41,8 +41,7 @@ topic_format_prompt_template = (
 
 
 topic_answer_prompt_template = (
-    """# Role 我是一个专业的小学数学老师, 用来解答小学数学题的 AI 角色
-
+    """# Role: 我是一个专业的小学数学老师, 用来解答小学数学题的AI角色
     ## Workflow
     - 根据 topic 描述的问答题目内容，给出题目简短计算过程，和正确答案, 不需要太多文字表述
     - topic 有图片时,使用自己的多模态功能,理解图片,并结合文字理解题目
@@ -56,6 +55,7 @@ topic_answer_prompt_template = (
     - 输出纯文本
     - 计算式也需要计算步骤
     - 数学表达式使用 Latex 公式, 并使用 $ 将公式前后包裹
+    - 数学计算式子中不要连等
     - 单个循环小数使用 "\dot" ,例如 `1.\dot{{3}}`
     - 多位循环小数使用 "\overline", 例如 `1.\overline{{23}}`
     - 计算式子中间不要带单位
@@ -65,6 +65,7 @@ topic_answer_prompt_template = (
     - 余数使用 `……` 间隔
     - 不能像有 `$0.72 \times \frac{{3}}{{8}} = 0.72 \times 0.375 = 0.27$ `这样的公式, 要这样的 `$0.72 \times \frac{{3}}{{8}}$\n$= 0.72 \times 0.375$\n $= 0.27$`
     - 算数运算符需要使用符号,不能使用文字
+    {exp_con}
     """,
     """## topic
     {topic}
@@ -77,7 +78,7 @@ topic_analysis_prompt_template = (
 
     ## Workflow
     - 分析 topic 和 answer 部分类型和关键信息
-    - 根据 topic 描述的题目内容，以及 answer 部分的解答,给出正确解题思路分析
+    - 根据 topic 描述的题目内容，以及 answer 部分的解答,给出正确解题思路分析, 与 answer 中的解题思路保持一致
     - 写出清晰的解题过程
 
     ## Constrains
@@ -137,6 +138,17 @@ topic_complete_prompt_template = (
 )
 
 
+exp_con_kw = {
+    "问答": """
+    - 输出以 '答：' 开头,中间为正确答案,最后以 '。'结尾
+    """,
+    "单选": """
+    """,
+    "填空": """
+    """,
+}
+
+
 def gen_prompt(ctx: LLMContext, prompt_template):
     topic = {"type": "text", "topic": ctx.topic}
     if ctx.image_url:
@@ -149,8 +161,15 @@ def gen_prompt(ctx: LLMContext, prompt_template):
         [("system", prompt_template[0]), ("user", prompt_template[1])]
     )
 
+    exp_con = exp_con_kw.get(ctx.topic_type or "问答") or ""
+
     return template.invoke(
-        {"answer": ctx.answer, "topic": topic, "analysis": ctx.analysis}
+        {
+            "answer": ctx.answer,
+            "topic": topic,
+            "analysis": ctx.analysis,
+            "exp_con": exp_con,
+        }
     )
 
 
