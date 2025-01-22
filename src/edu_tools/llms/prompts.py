@@ -8,6 +8,7 @@ math_fromat = """### 数学表达式
 - 分数用 LaTeX
 - 循环小数: \dot 表示单位，\overline 表示多位
 - 余数用"……"
+- 确保 LaTeX 数学公式正确
 """
 
 prohibit = """
