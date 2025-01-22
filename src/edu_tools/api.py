@@ -12,7 +12,7 @@ from edu_tools.llms.deepseek import (
     PROVIDE_NAME as deepseek_provide,
 )
 from edu_tools.llms.context import LLMContext, OCRContext
-from edu_tools.llms.prompts import prompt_templates, gen_prompt
+from edu_tools.llms.prompts import prompt_templates, gen_prompt, exp_con_kw
 
 from edu_tools.pb import auth_key_is_ok
 from edu_tools.utils import save_base64_image
@@ -108,3 +108,15 @@ def ocr(ctx: OCRContext, req: Request):
         os.remove(tf)
 
     return {"text": text}
+
+
+@app.get("/llm/topic_type_list")
+def topic_type_list(req: Request):
+    key = req.headers.get("X-Pfy-Key")
+    if key:
+        ok = auth_key_is_ok(key)
+        if not ok:
+            return {"topic": "账户已过期"}
+    else:
+        return {"topic": "无权访问"}
+    return [i for i in exp_con_kw.keys()]
