@@ -13,13 +13,28 @@ pb_host = os.getenv("PB_HOST", "http://192.168.31.95:809")
 pb_set_key = "baidu_edu_users"
 
 
-def auth_key_is_ok(key) -> bool:
+def fetch_key_info(key):
+    """
+    Fetch information for a given key from PocketBase.
+    
+    Args:
+        key: The key to fetch information for
+        
+    Returns:
+        dict: The JSON response data if successful, None if failed
+    """
     r = httpx.get(url=f"{pb_host}/api/collections/{pb_set_key}/records/{key}")
     if r.status_code != 200:
         log.error(f"fetch auth key err: {r.text}")
-        return False
+        return None
+    return r.json()
 
-    data = r.json()
+
+def auth_key_is_ok(key) -> bool:
+    data = fetch_key_info(key)
+    if not data:
+        return False
+        
     log.info(data)
     _ = data.get("id")
     exp_time = data.get("exp_time")

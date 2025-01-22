@@ -14,7 +14,7 @@ from edu_tools.llms.deepseek import (
 from edu_tools.llms.context import LLMContext, OCRContext
 from edu_tools.llms.prompts import prompt_templates, gen_prompt, exp_con_kw
 
-from edu_tools.pb import auth_key_is_ok
+from edu_tools.pb import auth_key_is_ok, fetch_key_info
 from edu_tools.utils import save_base64_image
 from edu_tools.llms.dify import dify_ocr, dify_math_run
 
@@ -120,3 +120,18 @@ def topic_type_list(req: Request):
     else:
         return {"topic": "无权访问"}
     return [i for i in exp_con_kw.keys()]
+
+
+@app.get("/user/info")
+def key_info(req: Request):
+    key = req.headers.get("X-Pfy-Key")
+    if key:
+        data = fetch_key_info(key)
+        if data:
+            return {
+                "text": f"账户是否过期({auth_key_is_ok(key)})",
+                "exp_time": data.get("exp_time", ""),
+            }
+        else:
+            return {"text": "账户不存在", "exp_time": ""}
+    return {"exp_time": ""}
