@@ -91,7 +91,7 @@ topic_analysis_prompt_template = (
     ## Workflow
     - 分析 topic 和 answer 部分类型和关键信息
     - 根据 topic 描述的题目内容，以及 answer 部分的解答,给出正确解题思路分析, 与 answer 中的解题思路保持一致
-    - 写出清晰的解题过程
+    - 提供清晰、逻辑严密的解题过程
 
     ## Constrains
     - 最后一行以: "故答案为：答案写在这里。"结尾,  多个答案时,使用 '；'间隔
@@ -99,6 +99,7 @@ topic_analysis_prompt_template = (
     - 标点符号使用中文符号
     - 输出纯文本
     - 要有文字思路描述
+    - 清晰阐述每一个计算细节
 
     {math_fromat}
 
