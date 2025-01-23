@@ -5,6 +5,7 @@ from dify_client.client import WorkflowClient
 
 from edu_tools.llms.context import LLMContext
 from edu_tools.utils import save_base64_image
+from edu_tools.llms.prompts import exp_con_kw
 
 load_dotenv()
 
@@ -50,6 +51,7 @@ def dify_math_run(ctx: LLMContext, uid: str):
         inputs={
             "topic": ctx.topic,
             "answer": ctx.answer,
+            "exp_con": exp_con_kw.get(ctx.topic_type or "问答") or "",
             "img": {
                 "transfer_method": "local_file",
                 "upload_file_id": file_upload(file_2_md(file), uid, MATH_API_KEY),

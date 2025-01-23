@@ -40,7 +40,7 @@ app.add_middleware(
 
 
 def replace_text(text):
-    text_list = [("乘以", "乘")]
+    text_list = [("乘以", "乘"), ("\\(", "$"), ("\\)", "$")]
     txt = text
     for t in text_list:
         txt = txt.replace(t[0], t[1])
