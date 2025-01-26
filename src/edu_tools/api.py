@@ -12,7 +12,12 @@ from edu_tools.llms.deepseek import (
     PROVIDE_NAME as deepseek_provide,
 )
 from edu_tools.llms.context import LLMContext, OCRContext
-from edu_tools.llms.prompts import prompt_templates, gen_prompt, exp_con_kw
+from edu_tools.llms.prompts.math import prompt_templates, gen_prompt, exp_con_kw
+from edu_tools.llms.prompts.yuwen import (
+    prompt_templates as yuwen_prompt_templates,
+    gen_prompt as yuwen_gen_prompt,
+    exp_con_kw as yunwen_exp_con_kw,
+)
 
 from edu_tools.pb import auth_key_is_ok, fetch_key_info
 from edu_tools.utils import save_base64_image
@@ -66,12 +71,18 @@ def llm_run(item: str, ctx: LLMContext, req: Request):
             return {"topic": "账户已过期"}
     else:
         return {"topic": "无权访问"}
+
     prompt = prompt_templates.get(item)
+    if ctx.discipline and (ctx.discipline == "" or ctx.discipline == "yuwen"):
+        prompt = yuwen_prompt_templates.get(item)
+
     if prompt:
         if (
             item in ["topic_answer", "topic_analysis"]
             and ctx.image_data
             and ctx.image_data.strip() != ""
+            and ctx.discipline
+            and (ctx.discipline == "" or ctx.discipline != "yuwen")
         ):
             text = dify_math_run(ctx, key)
             return {"topic": remove_empty_lines_from_string(text)}

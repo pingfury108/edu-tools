@@ -3,6 +3,7 @@ from pydantic import BaseModel
 
 
 class LLMContext(BaseModel):
+    discipline: Optional[str] = None
     topic: str
     topic_type: Optional[str] = None
     image_url: Optional[str] = None

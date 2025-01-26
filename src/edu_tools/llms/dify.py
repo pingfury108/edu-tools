@@ -5,7 +5,8 @@ from dify_client.client import WorkflowClient
 
 from edu_tools.llms.context import LLMContext
 from edu_tools.utils import save_base64_image
-from edu_tools.llms.prompts import exp_con_kw
+from edu_tools.llms.prompts.math import exp_con_kw
+from edu_tools.llms.prompts.yuwen import exp_con_kw as yuwen_exp_con_kw
 
 load_dotenv()
 
