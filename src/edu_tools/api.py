@@ -22,6 +22,7 @@ from edu_tools.llms.prompts.yuwen import (
 from edu_tools.pb import auth_key_is_ok, fetch_key_info
 from edu_tools.utils import save_base64_image
 from edu_tools.llms.dify import dify_ocr, dify_math_run
+from edu_tools.llms.ark import ark_run
 
 load_dotenv()
 
@@ -84,7 +85,10 @@ def llm_run(item: str, ctx: LLMContext, req: Request):
             and ctx.discipline
             and (ctx.discipline == "" or ctx.discipline != "yuwen")
         ):
-            text = dify_math_run(ctx, key)
+            # text = dify_math_run(ctx, key)
+            run_prompt = gen_prompt(ctx, prompt)
+            text = ark_run(run_prompt, ctx)
+
             return {"topic": remove_empty_lines_from_string(text)}
         run_prompt = gen_prompt(ctx, prompt)
         llm_fun = gemini_run

@@ -140,13 +140,6 @@ $= 13.6$
 
 
 def gen_prompt(ctx: LLMContext, prompt_template):
-    topic = {"type": "text", "topic": ctx.topic}
-    if ctx.image_url:
-        topic = [
-            *topic,
-            {"type": "image_url", "image_url": ctx.image_url},
-        ]
-
     template = ChatPromptTemplate.from_messages(
         [("system", prompt_template[0]), ("user", prompt_template[1])]
     )
@@ -155,10 +148,8 @@ def gen_prompt(ctx: LLMContext, prompt_template):
 
     return template.invoke(
         {
-            "math_fromat": math_fromat,
-            "prohibit": prohibit,
             "answer": ctx.answer,
-            "topic": topic,
+            "topic": ctx.topic,
             "analysis": ctx.analysis,
             "exp_con": exp_con,
         }
