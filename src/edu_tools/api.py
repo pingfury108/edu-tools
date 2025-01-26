@@ -22,7 +22,7 @@ from edu_tools.llms.prompts.yuwen import (
 from edu_tools.pb import auth_key_is_ok, fetch_key_info
 from edu_tools.utils import save_base64_image
 from edu_tools.llms.dify import dify_ocr, dify_math_run
-from edu_tools.llms.ark import ark_run
+from edu_tools.llms.ark import ark_run, ark_ocr
 
 load_dotenv()
 
@@ -111,12 +111,12 @@ def ocr(ctx: OCRContext, req: Request):
             return {"topic": "账户已过期"}
     else:
         return {"topic": "无权访问"}
-    tf = save_base64_image(ctx.image_data)
     text = ""
     try:
+        tf = save_base64_image(ctx.image_data)
         # text = gemini_ocr(tf)
-        text = dify_ocr(tf, key)
-        # text = ""
+        # text = dify_ocr(tf, key)
+        text = ark_ocr(ctx)
     except Exception as e:
         log.error(f"ocr: {e}")
     finally:
