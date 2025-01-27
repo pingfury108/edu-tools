@@ -6,9 +6,12 @@ from edu_tools.llms.context import LLMContext, OCRContext
 
 load_dotenv()
 
+PROVIDE_NAME = "ark"
+
 API_KEY = os.getenv("ARK_API_KEY", "")
 API_BASE = "https://ark.cn-beijing.volces.com/api/v3/"
 model = os.getenv("ARK_MODEL")
+text_model = os.getenv("ARK_TEXT_MODEL")
 
 
 def ark_run(prompt, ctx: LLMContext):
@@ -17,7 +20,10 @@ def ark_run(prompt, ctx: LLMContext):
         "content": [{"type": "text", "text": prompt.to_messages()[-1].content}],
     }
 
-    if ctx.image_data != "":
+    mode_name = text_model
+
+    if ctx.image_data and ctx.image_data != "":
+        mode_name = model
         user_msg = {
             "role": "user",
             "content": [
@@ -31,7 +37,7 @@ def ark_run(prompt, ctx: LLMContext):
 
     client = OpenAI(base_url=API_BASE, api_key=API_KEY)
     completion = client.chat.completions.create(
-        model=model,
+        model=mode_name,
         messages=[
             {"role": "system", "content": prompt.to_messages()[0].content},
             user_msg,

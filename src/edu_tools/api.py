@@ -22,7 +22,7 @@ from edu_tools.llms.prompts.yuwen import (
 from edu_tools.pb import auth_key_is_ok, fetch_key_info
 from edu_tools.utils import save_base64_image
 from edu_tools.llms.dify import dify_ocr, dify_math_run
-from edu_tools.llms.ark import ark_run, ark_ocr
+from edu_tools.llms.ark import ark_run, ark_ocr, PROVIDE_NAME as ark_provide
 
 load_dotenv()
 
@@ -94,7 +94,10 @@ def llm_run(item: str, ctx: LLMContext, req: Request):
         llm_fun = gemini_run
         if llm_provide == deepseek_provide:
             llm_fun = deepseek_run
-            log.debug(run_prompt)
+        if llm_provide == ark_provide:
+            run_prompt = gen_prompt(ctx, prompt)
+            text = ark_run(run_prompt, ctx)
+        log.debug(run_prompt)
         text = llm_fun(run_prompt)
         # log.info(deepseek_math_fromat(text))
         return {"topic": remove_empty_lines_from_string(text)}
