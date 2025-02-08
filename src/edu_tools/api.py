@@ -116,10 +116,11 @@ def ocr(ctx: OCRContext, req: Request):
         return {"topic": "无权访问"}
     text = ""
     try:
-        tf = save_base64_image(ctx.image_data)
-        # text = gemini_ocr(tf)
-        # text = dify_ocr(tf, key)
-        text = ark_ocr(ctx)
+        if llm_provide == ark_provide:
+            text = ark_ocr(ctx)
+        else:
+            tf = save_base64_image(ctx.image_data)
+            text = gemini_ocr(tf)
     except Exception as e:
         log.error(f"ocr: {e}")
     finally:

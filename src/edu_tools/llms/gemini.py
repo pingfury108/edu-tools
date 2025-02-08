@@ -7,7 +7,7 @@ load_dotenv()
 
 genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 
-ModelName = "gemini-1.5-flash-latest"
+ModelName = "gemini-2.0-flash"
 PROVIDE_NAME = "gemini"
 
 
@@ -41,7 +41,7 @@ ocr_prompt = """
 def gemini_ocr(file):
     img_file = genai.upload_file(path=file)
     file = genai.get_file(name=img_file.name)
-    model = genai.GenerativeModel(model_name="gemini-1.5-flash-latest")
+    model = genai.GenerativeModel(model_name=ModelName)
 
     # Prompt the model with text and the previously uploaded image.
     resp = model.generate_content([img_file, ocr_prompt])
