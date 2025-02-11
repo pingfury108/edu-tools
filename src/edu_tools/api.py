@@ -122,10 +122,9 @@ def ocr(ctx: OCRContext, req: Request):
         else:
             tf = save_base64_image(ctx.image_data)
             text = gemini_ocr(tf)
+            os.remove(tf)
     except Exception as e:
         log.error(f"ocr: {e}")
-    finally:
-        os.remove(tf)
 
     return {"text": text}
 
