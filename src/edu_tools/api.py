@@ -97,6 +97,7 @@ def llm_run(item: str, ctx: LLMContext, req: Request):
         if llm_provide == ark_provide:
             run_prompt = gen_prompt(ctx, prompt)
             text = ark_run(run_prompt, ctx)
+            return {"topic": remove_empty_lines_from_string(text)}
         log.debug(run_prompt)
         text = llm_fun(run_prompt)
         # log.info(deepseek_math_fromat(text))
