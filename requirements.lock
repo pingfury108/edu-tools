@@ -40,6 +40,7 @@ cachetools==5.5.0
 certifi==2024.12.14
     # via httpcore
     # via httpx
+    # via influxdb-client
     # via requests
 cffi==1.17.1
     # via cryptography
@@ -172,6 +173,8 @@ idna==3.10
     # via httpx
     # via requests
     # via yarl
+influxdb-client==1.48.0
+    # via edu-tools
 jinja2==3.1.5
     # via altair
     # via fastapi
@@ -302,6 +305,7 @@ pyparsing==3.2.0
     # via httplib2
 python-dateutil==2.9.0.post0
     # via google-cloud-bigquery
+    # via influxdb-client
     # via pandas
 python-dotenv==1.0.1
     # via edu-tools
@@ -317,6 +321,8 @@ pyyaml==6.0.2
     # via langchain-community
     # via langchain-core
     # via uvicorn
+reactivex==4.0.4
+    # via influxdb-client
 referencing==0.35.1
     # via jsonschema
     # via jsonschema-specifications
@@ -347,6 +353,8 @@ rpds-py==0.22.3
     # via referencing
 rsa==4.9
     # via google-auth
+setuptools==75.8.0
+    # via influxdb-client
 shapely==2.0.6
     # via google-cloud-aiplatform
 shellingham==1.5.4
@@ -395,6 +403,7 @@ typing-extensions==4.12.2
     # via openai
     # via pydantic
     # via pydantic-core
+    # via reactivex
     # via rich-toolkit
     # via sqlalchemy
     # via streamlit
@@ -407,6 +416,7 @@ tzdata==2024.2
 uritemplate==4.1.1
     # via google-api-python-client
 urllib3==2.3.0
+    # via influxdb-client
     # via requests
 uvicorn==0.34.0
     # via fastapi

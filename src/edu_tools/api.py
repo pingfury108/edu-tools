@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 from typing import Optional
 from pydantic import BaseModel
 
+
 from edu_tools.llms.gemini import gemini_run, gemini_ocr, PROVIDE_NAME as gemini_provide
 from edu_tools.llms.deepseek import (
     deepseek_run,
@@ -25,6 +26,8 @@ from edu_tools.pb import auth_key_is_ok, fetch_key_info
 from edu_tools.utils import save_base64_image
 from edu_tools.llms.dify import dify_ocr, dify_math_run
 from edu_tools.llms.ark import ark_run, ark_ocr, PROVIDE_NAME as ark_provide
+
+from edu_tools.influxdb import write_log
 
 load_dotenv()
 
@@ -59,6 +62,11 @@ async def auth(request: Request, call_next):
     log.info(
         f"Request processed - path: {request.url.path}, method: {request.method}, uid: {key}, time: {process_time:.3f}s"
     )
+    try:
+        write_log(p=request.url.path, key=key, process_time=process_time)
+    except Exception:
+        log.error(f"write log err: {e}")
+        pass
     return response
 
 
