@@ -2,6 +2,7 @@ import os
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from dotenv import load_dotenv
+from edu_tools.llms.context import LLMContext
 
 load_dotenv()
 
@@ -12,7 +13,7 @@ API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
 API_BASE = "https://api.deepseek.com/v1"
 
 
-def deepseek_run(prompt):
+def deepseek_run(prompt, ctx: LLMContext):
     model = ChatOpenAI(
         model_name=ModelName,
         openai_api_key=API_KEY,

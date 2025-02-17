@@ -16,10 +16,10 @@ pb_set_key = "baidu_edu_users"
 def fetch_key_info(key):
     """
     Fetch information for a given key from PocketBase.
-    
+
     Args:
         key: The key to fetch information for
-        
+
     Returns:
         dict: The JSON response data if successful, None if failed
     """
@@ -34,8 +34,8 @@ def auth_key_is_ok(key) -> bool:
     data = fetch_key_info(key)
     if not data:
         return False
-        
-    log.info(data)
+
+    # log.info(data)
     _ = data.get("id")
     exp_time = data.get("exp_time")
 

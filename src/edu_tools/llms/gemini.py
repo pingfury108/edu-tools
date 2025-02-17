@@ -2,6 +2,7 @@ import os
 import google.generativeai as genai
 from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
+from edu_tools.llms.context import LLMContext
 
 load_dotenv()
 
@@ -11,7 +12,7 @@ ModelName = "gemini-2.0-flash"
 PROVIDE_NAME = "gemini"
 
 
-def gemini_run(prompt):
+def gemini_run(prompt, ctx: LLMContext):
     model = ChatGoogleGenerativeAI(model=ModelName)
 
     response = model.invoke(prompt)

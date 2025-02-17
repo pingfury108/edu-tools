@@ -1,8 +1,10 @@
 import os
+import time
 import logging
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from typing import Optional
 from pydantic import BaseModel
 
@@ -36,6 +38,30 @@ app = FastAPI()
 
 origins = ["*"]  # 允许所有来源，仅限开发环境
 
+
+@app.middleware("http")
+async def auth(request: Request, call_next):
+    # 检查是否跳过 middleware
+    if request.url.path in ["/llm/topic_type_list", "/user/info"]:
+        return await call_next(request)
+
+    key = request.headers.get("X-Pfy-Key")
+    if key:
+        ok = auth_key_is_ok(key)
+        if not ok:
+            return JSONResponse(content={"topic": "账户已过期"})
+    else:
+        return JSONResponse(content={"topic": "无权访问"})
+
+    start_time = time.perf_counter()
+    response = await call_next(request)
+    process_time = time.perf_counter() - start_time
+    log.info(
+        f"Request processed - path: {request.url.path}, method: {request.method}, uid: {key}, time: {process_time:.3f}s"
+    )
+    return response
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -65,14 +91,6 @@ class Topic(BaseModel):
 
 @app.post("/llm/run/{item}")
 def llm_run(item: str, ctx: LLMContext, req: Request):
-    key = req.headers.get("X-Pfy-Key")
-    if key:
-        ok = auth_key_is_ok(key)
-        if not ok:
-            return {"topic": "账户已过期"}
-    else:
-        return {"topic": "无权访问"}
-
     prompt = prompt_templates.get(item)
     if ctx.discipline and (ctx.discipline == "" or ctx.discipline == "yuwen"):
         prompt = yuwen_prompt_templates.get(item)
@@ -96,10 +114,10 @@ def llm_run(item: str, ctx: LLMContext, req: Request):
             llm_fun = deepseek_run
         if llm_provide == ark_provide:
             run_prompt = gen_prompt(ctx, prompt)
-            text = ark_run(run_prompt, ctx)
-            return {"topic": remove_empty_lines_from_string(text)}
+            # text = ark_run(run_prompt, ctx)
+            # return {"topic": remove_empty_lines_from_string(text)}
         log.debug(run_prompt)
-        text = llm_fun(run_prompt)
+        text = llm_fun(run_prompt, ctx)
         # log.info(deepseek_math_fromat(text))
         return {"topic": remove_empty_lines_from_string(text)}
     else:
@@ -131,13 +149,6 @@ def ocr(ctx: OCRContext, req: Request):
 
 @app.get("/llm/topic_type_list")
 def topic_type_list(req: Request):
-    key = req.headers.get("X-Pfy-Key")
-    if key:
-        ok = auth_key_is_ok(key)
-        if not ok:
-            return {"topic": "账户已过期"}
-    else:
-        return {"topic": "无权访问"}
     return [i for i in exp_con_kw.keys()]
 
 
