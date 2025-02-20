@@ -16,15 +16,10 @@ from edu_tools.llms.deepseek import (
 )
 from edu_tools.llms.context import LLMContext, OCRContext
 from edu_tools.llms.prompts.math import prompt_templates, gen_prompt, exp_con_kw
-from edu_tools.llms.prompts.yuwen import (
-    prompt_templates as yuwen_prompt_templates,
-    gen_prompt as yuwen_gen_prompt,
-    exp_con_kw as yunwen_exp_con_kw,
-)
+from edu_tools.llms.prompts.yuwen import prompt_templates as yuwen_prompt_templates
 
 from edu_tools.pb import auth_key_is_ok, fetch_key_info
 from edu_tools.utils import save_base64_image
-from edu_tools.llms.dify import dify_ocr, dify_math_run
 from edu_tools.llms.ark import ark_run, ark_ocr, PROVIDE_NAME as ark_provide
 
 from edu_tools.influxdb import write_log
@@ -134,13 +129,6 @@ def llm_run(item: str, ctx: LLMContext, req: Request):
 
 @app.post("/llm/ocr")
 def ocr(ctx: OCRContext, req: Request):
-    key = req.headers.get("X-Pfy-Key")
-    if key:
-        ok = auth_key_is_ok(key)
-        if not ok:
-            return {"topic": "账户已过期"}
-    else:
-        return {"topic": "无权访问"}
     text = ""
     try:
         if llm_provide == ark_provide:
