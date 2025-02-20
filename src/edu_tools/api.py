@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 from typing import Optional
 from pydantic import BaseModel
 import asyncio
-from collections import defaultdict
+from collections import defaultdict, deque
 
 from edu_tools.llms.gemini import gemini_run, gemini_ocr, PROVIDE_NAME as gemini_provide
 from edu_tools.llms.deepseek import (
@@ -38,6 +38,49 @@ app = FastAPI()
 origins = ["*"]  # 允许所有来源，仅限开发环境
 
 _key_locks = defaultdict(asyncio.Lock)
+
+# Rate limiting configuration
+RATE_LIMIT_REQUESTS = 4  # Number of requests allowed
+RATE_LIMIT_WINDOW = 10  # Time window in seconds
+
+# Rate limit storage
+_rate_limits = defaultdict(lambda: deque(maxlen=RATE_LIMIT_REQUESTS))
+
+
+@app.middleware("http")
+async def rate_limit(request: Request, call_next):
+    key = request.headers.get("x-pfy-key")
+
+    # Skip rate limiting for certain endpoints
+    if request.url.path in ["/llm/topic_type_list", "/user/info"]:
+        return await call_next(request)
+
+    if not key:
+        return JSONResponse(content={"topic": "无权访问"})
+
+    # Get the current timestamp
+    now = time.time()
+
+    # Remove requests older than the window
+    while _rate_limits[key] and _rate_limits[key][0] < now - RATE_LIMIT_WINDOW:
+        _rate_limits[key].popleft()
+
+    # Check if rate limit is exceeded
+    if len(_rate_limits[key]) >= RATE_LIMIT_REQUESTS:
+        return JSONResponse(
+            status_code=200,
+            content={
+                "topic": "请求过于频繁，请稍后再试",
+                "retry_after": int(RATE_LIMIT_WINDOW - (now - _rate_limits[key][0])),
+            },
+        )
+
+    # Add current request timestamp
+    _rate_limits[key].append(now)
+
+    # Process the request
+    return await call_next(request)
+
 
 @app.middleware("http")
 async def auth(request: Request, call_next):
@@ -99,15 +142,17 @@ async def llm_run(item: str, ctx: LLMContext, req: Request):
     # Get the x-pfy-key from request headers
     key = req.headers.get("x-pfy-key")
     if not key:
-        return {"topic": "操作太快了，请等待进行的任务结束后再操作"}
-    
+        return {"topic": "无权访问"}
+
     # Get or create lock for this key
     lock = _key_locks[key]
-    
+
     # Try to acquire the lock
     if not await lock.acquire():
-        raise HTTPException(status_code=429, detail="Another request is in progress for this key")
-    
+        raise HTTPException(
+            status_code=429, detail="Another request is in progress for this key"
+        )
+
     try:
         prompt = prompt_templates.get(item)
         if ctx.discipline and (ctx.discipline == "" or ctx.discipline == "yuwen"):
