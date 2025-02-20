@@ -2,12 +2,13 @@ import os
 import time
 import logging
 from dotenv import load_dotenv
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from typing import Optional
 from pydantic import BaseModel
-
+import asyncio
+from collections import defaultdict
 
 from edu_tools.llms.gemini import gemini_run, gemini_ocr, PROVIDE_NAME as gemini_provide
 from edu_tools.llms.deepseek import (
@@ -36,6 +37,7 @@ app = FastAPI()
 
 origins = ["*"]  # 允许所有来源，仅限开发环境
 
+_key_locks = defaultdict(asyncio.Lock)
 
 @app.middleware("http")
 async def auth(request: Request, call_next):
@@ -59,7 +61,7 @@ async def auth(request: Request, call_next):
     )
     try:
         write_log(p=request.url.path, key=key, process_time=process_time)
-    except Exception:
+    except Exception as e:
         log.error(f"write log err: {e}")
         pass
     return response
@@ -93,38 +95,53 @@ class Topic(BaseModel):
 
 
 @app.post("/llm/run/{item}")
-def llm_run(item: str, ctx: LLMContext, req: Request):
-    prompt = prompt_templates.get(item)
-    if ctx.discipline and (ctx.discipline == "" or ctx.discipline == "yuwen"):
-        prompt = yuwen_prompt_templates.get(item)
+async def llm_run(item: str, ctx: LLMContext, req: Request):
+    # Get the x-pfy-key from request headers
+    key = req.headers.get("x-pfy-key")
+    if not key:
+        return {"topic": "操作太快了，请等待进行的任务结束后再操作"}
+    
+    # Get or create lock for this key
+    lock = _key_locks[key]
+    
+    # Try to acquire the lock
+    if not await lock.acquire():
+        raise HTTPException(status_code=429, detail="Another request is in progress for this key")
+    
+    try:
+        prompt = prompt_templates.get(item)
+        if ctx.discipline and (ctx.discipline == "" or ctx.discipline == "yuwen"):
+            prompt = yuwen_prompt_templates.get(item)
 
-    if prompt:
-        if (
-            item in ["topic_answer", "topic_analysis"]
-            and ctx.image_data
-            and ctx.image_data.strip() != ""
-            and ctx.discipline
-            and (ctx.discipline == "" or ctx.discipline != "yuwen")
-        ):
-            # text = dify_math_run(ctx, key)
-            run_prompt = gen_prompt(ctx, prompt)
-            text = ark_run(run_prompt, ctx)
+        if prompt:
+            if (
+                item in ["topic_answer", "topic_analysis"]
+                and ctx.image_data
+                and ctx.image_data.strip() != ""
+                and ctx.discipline
+                and (ctx.discipline == "" or ctx.discipline != "yuwen")
+            ):
+                # text = dify_math_run(ctx, key)
+                run_prompt = gen_prompt(ctx, prompt)
+                text = ark_run(run_prompt, ctx)
 
-            return {"topic": remove_empty_lines_from_string(text)}
-        run_prompt = gen_prompt(ctx, prompt)
-        llm_fun = gemini_run
-        if llm_provide == deepseek_provide:
-            llm_fun = deepseek_run
-        if llm_provide == ark_provide:
+                return {"topic": remove_empty_lines_from_string(text)}
             run_prompt = gen_prompt(ctx, prompt)
-            text = ark_run(run_prompt, ctx)
+            llm_fun = gemini_run
+            if llm_provide == deepseek_provide:
+                llm_fun = deepseek_run
+            if llm_provide == ark_provide:
+                run_prompt = gen_prompt(ctx, prompt)
+                text = ark_run(run_prompt, ctx)
+                return {"topic": remove_empty_lines_from_string(text)}
+            log.debug(run_prompt)
+            text = llm_fun(run_prompt, ctx)
+            # log.info(deepseek_math_fromat(text))
             return {"topic": remove_empty_lines_from_string(text)}
-        log.debug(run_prompt)
-        text = llm_fun(run_prompt, ctx)
-        # log.info(deepseek_math_fromat(text))
-        return {"topic": remove_empty_lines_from_string(text)}
-    else:
-        return {"msg": "Unsupported parameters"}
+        else:
+            return {"msg": "Unsupported parameters"}
+    finally:
+        lock.release()
 
 
 @app.post("/llm/ocr")
