@@ -1,7 +1,7 @@
 from langchain_core.prompts import ChatPromptTemplate
 from edu_tools.llms.context import LLMContext
 
-math_fromat = """### 数学表达式
+math_fromat = r"""### 数学表达式
 - LaTeX 公式用 $ 包裹
 - 计算分步写，每步一行
 - 使用数学符号而非文字
@@ -11,7 +11,7 @@ math_fromat = """### 数学表达式
 - 确保 LaTeX 数学公式正确
 """
 
-prohibit = """
+prohibit = r"""
 ### 禁止项
 - Markdown 语法
 - "步骤"等文字提示
@@ -22,7 +22,7 @@ prohibit = """
 """
 
 topic_format_prompt_template = (
-    """# Role 你是一个整理文本格式的AI角色
+    r"""# Role 你是一个整理文本格式的AI角色
 
     ## Workflow
     - 将 topic 中的内容整理格式后输出
@@ -47,7 +47,7 @@ topic_format_prompt_template = (
     - 不能有像: `$0.72 \times \frac{{3}}{{8}} = 0.72 \times 0.375 = 0.27$ `这样的公式, 要这样的 `$0.72 \times \frac{{3}}{{8}}$\n$= 0.72 \times 0.375$\n $= 0.27$`
     - 文字不能在 latex 公式里,
 """,
-    """## topic
+    r"""## topic
     {topic}
 
     """,
@@ -55,7 +55,7 @@ topic_format_prompt_template = (
 
 
 topic_answer_prompt_template = (
-    """# Role: 我是一个专业的小学数学老师, 用来解答小学数学题的AI角色
+    r"""# Role: 我是一个专业的小学数学老师, 用来解答小学数学题的AI角色
     ## Workflow
     - 根据 topic 描述的问答题目内容，给出题目简短计算过程，和正确答案, 不需要太多文字表述
     - topic 有图片时,使用自己的多模态功能,理解图片,并结合文字理解题目
@@ -79,13 +79,13 @@ topic_answer_prompt_template = (
 
     {exp_con}
     """,
-    """## topic
+    r"""## topic
     {topic}
     """,
 )
 
 topic_analysis_prompt_template = (
-    """
+    r"""
     # Role 我是一个专业的小学数学老师, 用来分析数学题目,解题思路的 AI 角色
 
     ## Workflow
@@ -110,7 +110,7 @@ topic_analysis_prompt_template = (
     - 计算式子中间不要有单位, 例如: 厘米,米,元,之类的词
     - 不要出现,'首先' '然后' '最后'之类的词
     """,
-    """
+    r"""
     ## topic
     {topic}
 
@@ -120,7 +120,7 @@ topic_analysis_prompt_template = (
 )
 
 topic_complete_prompt_template = (
-    """# Role: 我是一个专业的小学数学老师, 用来补全残缺的数学题目的 AI 角色
+    r"""# Role: 我是一个专业的小学数学老师, 用来补全残缺的数学题目的 AI 角色
     ## Goals: 将输入中残缺的数学题目补全完整
 
     ## Constrains:
@@ -135,7 +135,7 @@ topic_complete_prompt_template = (
     - text
     - no markdown
     """,
-    """
+    r"""
     ## topic
     {topic}
     """,
@@ -143,29 +143,29 @@ topic_complete_prompt_template = (
 
 
 exp_con_kw = {
-    "问答": """
+    "问答": r"""
 ## 示例格式
 $7.8÷3.9×6.8$
 $= 2×6.8$
 $= 13.6$
 答：答案写在这里(回答topic中的提问)。
     """,
-    "单选": """
+    "单选": r"""
     - 不要计算过程,只给出选项
     ## 示例格式
     A(选项)
     """,
-    "填空": """
+    "填空": r"""
     ## 示例格式
     答案；答案2。
     """,
-    "计算题": """
+    "计算题": r"""
     ## 示例格式
     $7.8÷3.9×6.8$
     $= 2×6.8$
     $= 13.6$
     """,
-    "解方程": """
+    "解方程": r"""
     ## 示例格式
     解:
     $7.8÷3.9×6.8$
