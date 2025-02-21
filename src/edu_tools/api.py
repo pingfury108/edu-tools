@@ -149,9 +149,7 @@ async def llm_run(item: str, ctx: LLMContext, req: Request):
 
     # Try to acquire the lock
     if not await lock.acquire():
-        raise HTTPException(
-            status_code=429, detail="Another request is in progress for this key"
-        )
+        return {"topic": "已有任务在进行，请等待结束后再操作"}
 
     try:
         prompt = prompt_templates.get(item)
@@ -190,19 +188,34 @@ async def llm_run(item: str, ctx: LLMContext, req: Request):
 
 
 @app.post("/llm/ocr")
-def ocr(ctx: OCRContext, req: Request):
-    text = ""
+async def ocr(ctx: OCRContext, req: Request):
+    # Get the x-pfy-key from request headers
+    key = req.headers.get("x-pfy-key")
+    if not key:
+        return {"topic": "无权访问"}
+
+    # Get or create lock for this key
+    lock = _key_locks[key]
+
+    # Try to acquire the lock
+    if not await lock.acquire():
+        return {"topic": "已有任务在进行，请等待结束后再操作"}
+
     try:
+        text = ""
         if llm_provide == ark_provide:
             text = ark_ocr(ctx)
         else:
             tf = save_base64_image(ctx.image_data)
             text = gemini_ocr(tf)
             os.remove(tf)
+        return {"text": text}
     except Exception as e:
         log.error(f"ocr: {e}")
-
-    return {"text": text}
+        return {"text": text}
+    finally:
+        # Always release the lock
+        lock.release()
 
 
 @app.get("/llm/topic_type_list")
