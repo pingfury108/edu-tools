@@ -3,6 +3,7 @@ import httpx
 from logging import getLogger
 from datetime import datetime, timezone
 from dotenv import load_dotenv
+from .utils import timed_lru_cache
 
 load_dotenv()
 
@@ -13,9 +14,11 @@ pb_host = os.getenv("PB_HOST", "http://192.168.31.95:809")
 pb_set_key = "baidu_edu_users"
 
 
+@timed_lru_cache(seconds=5)
 def fetch_key_info(key):
     """
     Fetch information for a given key from PocketBase.
+    Results are cached for 3 seconds.
 
     Args:
         key: The key to fetch information for

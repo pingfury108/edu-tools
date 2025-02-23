@@ -1,6 +1,36 @@
 import base64
 import tempfile
 import re
+import time
+import functools
+
+
+def timed_lru_cache(seconds: int, maxsize: int = 128):
+    """
+    结合了LRU缓存和时间过期的装饰器。
+
+    Args:
+        seconds (int): 缓存的过期时间（秒）
+        maxsize (int, optional): 缓存的最大条目数. 默认 128
+
+    Returns:
+        function: 装饰器函数
+    """
+    def wrapper_decorator(func):
+        func = functools.lru_cache(maxsize=maxsize)(func)
+        func.lifetime = seconds
+        func.expiration = time.time() + func.lifetime
+
+        @functools.wraps(func)
+        def wrapped_func(*args, **kwargs):
+            if time.time() >= func.expiration:
+                func.cache_clear()
+                func.expiration = time.time() + func.lifetime
+            return func(*args, **kwargs)
+
+        return wrapped_func
+
+    return wrapper_decorator
 
 
 def save_base64_image(base64_data):
