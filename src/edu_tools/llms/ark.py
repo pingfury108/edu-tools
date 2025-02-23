@@ -42,6 +42,7 @@ def ark_run(prompt, ctx: LLMContext):
             {"role": "system", "content": prompt.to_messages()[0].content},
             user_msg,
         ],
+        response_format={"type": "text"},
     )
     return completion.choices[0].message.content
 

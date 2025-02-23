@@ -1,4 +1,5 @@
 import os
+import re
 import time
 import logging
 from dotenv import load_dotenv
@@ -128,8 +129,25 @@ def replace_text(text):
 
 
 def remove_empty_lines_from_string(text):
+    text = convert_to_plain_text(text)
     lines = [replace_text(line) for line in text.splitlines() if line.strip()]
     return "\n".join(lines)
+
+
+def convert_to_plain_text(text):
+    # 移除标题
+    text = re.sub(r"#+\s", "", text)
+    # 移除粗体和斜体
+    text = re.sub(r"\*\*?(.*?)\*\*?", r"\1", text)
+    # 移除代码块
+    text = re.sub(r"```.*?```", "", text, flags=re.DOTALL)
+    # 移除行内代码
+    text = re.sub(r"`([^`]+)`", r"\1", text)
+    # 移除链接
+    text = re.sub(r"\[([^\]]+)\]\([^\)]+\)", r"\1", text)
+    # 移除列表标记
+    text = re.sub(r"^\s*[-*+]\s", "", text, flags=re.MULTILINE)
+    return text.strip()
 
 
 class Topic(BaseModel):
