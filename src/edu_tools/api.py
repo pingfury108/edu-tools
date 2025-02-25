@@ -10,6 +10,7 @@ from typing import Optional
 from pydantic import BaseModel
 import asyncio
 from collections import defaultdict, deque
+from datetime import datetime
 
 from edu_tools.llms.gemini import gemini_run, gemini_ocr, PROVIDE_NAME as gemini_provide
 from edu_tools.llms.deepseek import (
@@ -38,7 +39,8 @@ app = FastAPI()
 
 origins = ["*"]  # 允许所有来源，仅限开发环境
 
-_key_locks = defaultdict(asyncio.Lock)
+# 简单的请求状态管理
+_request_states = {}
 
 # Rate limiting configuration
 RATE_LIMIT_REQUESTS = 4  # Number of requests allowed
@@ -157,19 +159,30 @@ class Topic(BaseModel):
 
 @app.post("/llm/run/{item}")
 async def llm_run(item: str, ctx: LLMContext, req: Request):
-    # Get the x-pfy-key from request headers
     key = req.headers.get("x-pfy-key")
     if not key:
         return {"topic": "无权访问"}
 
-    # Get or create lock for this key
-    lock = _key_locks[key]
-
-    # Try to acquire the lock
-    if not await lock.acquire():
-        return {"topic": "已有任务在进行，请等待结束后再操作"}
-
+    current_time = time.time()
+    
+    # 检查并清理过期状态（超过60秒的请求状态）
+    if key in _request_states:
+        if current_time - _request_states[key] < 60:
+            return {"topic": "已有任务在进行，请等待结束后再操作"}
+        else:
+            # 自动清理超时的状态
+            del _request_states[key]
+    
     try:
+        _request_states[key] = current_time
+        
+        # Get or create lock for this key
+        lock = asyncio.Lock()
+
+        # Try to acquire the lock
+        if not await lock.acquire():
+            return {"topic": "已有任务在进行，请等待结束后再操作"}
+
         prompt = prompt_templates.get(item)
         if ctx.discipline and (ctx.discipline == "" or ctx.discipline == "yuwen"):
             prompt = yuwen_prompt_templates.get(item)
@@ -202,6 +215,8 @@ async def llm_run(item: str, ctx: LLMContext, req: Request):
         else:
             return {"msg": "Unsupported parameters"}
     finally:
+        # 清理状态
+        _request_states.pop(key, None)
         lock.release()
 
 
@@ -212,14 +227,26 @@ async def ocr(ctx: OCRContext, req: Request):
     if not key:
         return {"topic": "无权访问"}
 
-    # Get or create lock for this key
-    lock = _key_locks[key]
-
-    # Try to acquire the lock
-    if not await lock.acquire():
-        return {"topic": "已有任务在进行，请等待结束后再操作"}
+    current_time = time.time()
+    
+    # 检查并清理过期状态（超过60秒的请求状态）
+    if key in _request_states:
+        if current_time - _request_states[key] < 60:
+            return {"topic": "已有任务在进行，请等待结束后再操作"}
+        else:
+            # 自动清理超时的状态
+            del _request_states[key]
 
     try:
+        _request_states[key] = current_time
+        
+        # Get or create lock for this key
+        lock = asyncio.Lock()
+
+        # Try to acquire the lock
+        if not await lock.acquire():
+            return {"topic": "已有任务在进行，请等待结束后再操作"}
+
         text = ""
         if llm_provide == ark_provide:
             text = ark_ocr(ctx)
@@ -234,6 +261,9 @@ async def ocr(ctx: OCRContext, req: Request):
     finally:
         # Always release the lock
         lock.release()
+        # 清理请求状态
+        if key in _request_states:
+            del _request_states[key]
 
 
 @app.get("/llm/topic_type_list")
