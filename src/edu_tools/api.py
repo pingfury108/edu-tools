@@ -35,7 +35,7 @@ log = logging.getLogger(__name__)
 
 llm_provide = os.getenv("LLM_PROVIDE", gemini_provide)
 
-app = FastAPI()
+app = FastAPI(docs_url=None, redoc_url=None)
 
 origins = ["*"]  # 允许所有来源，仅限开发环境
 
@@ -61,6 +61,7 @@ def cleanup_expired_locks():
 # Rate limiting configuration
 RATE_LIMIT_REQUESTS = 4  # Number of requests allowed
 RATE_LIMIT_WINDOW = 10  # Time window in seconds
+RATE_LIMIT_EXEMPT_ENDPOINTS = ["/docs", "/llm/topic_type_list", "/user/info"]
 
 # Rate limit storage
 _rate_limits = defaultdict(lambda: deque(maxlen=RATE_LIMIT_REQUESTS))
@@ -71,7 +72,7 @@ async def rate_limit(request: Request, call_next):
     key = request.headers.get("x-pfy-key")
 
     # Skip rate limiting for certain endpoints
-    if request.url.path in ["/llm/topic_type_list", "/user/info"]:
+    if request.url.path in RATE_LIMIT_EXEMPT_ENDPOINTS:
         return await call_next(request)
 
     if not key:
@@ -104,7 +105,7 @@ async def rate_limit(request: Request, call_next):
 @app.middleware("http")
 async def auth(request: Request, call_next):
     # 检查是否跳过 middleware
-    if request.url.path in ["/llm/topic_type_list", "/user/info"]:
+    if request.url.path in RATE_LIMIT_EXEMPT_ENDPOINTS:
         return await call_next(request)
 
     key = request.headers.get("X-Pfy-Key")
