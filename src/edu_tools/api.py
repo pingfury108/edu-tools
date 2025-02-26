@@ -41,6 +41,22 @@ origins = ["*"]  # 允许所有来源，仅限开发环境
 
 # 简单的请求状态管理
 _request_states = {}
+_locks = {}
+
+def cleanup_expired_locks():
+    """清理过期的锁和请求状态"""
+    current_time = time.time()
+    expired_keys = []
+    
+    for key, timestamp in _request_states.items():
+        if current_time - timestamp >= 60:
+            expired_keys.append(key)
+            
+    for key in expired_keys:
+        if key in _request_states:
+            del _request_states[key]
+        if key in _locks and not _locks[key].locked():
+            del _locks[key]
 
 # Rate limiting configuration
 RATE_LIMIT_REQUESTS = 4  # Number of requests allowed
@@ -159,65 +175,72 @@ class Topic(BaseModel):
 
 @app.post("/llm/run/{item}")
 async def llm_run(item: str, ctx: LLMContext, req: Request):
+    # Get the x-pfy-key from request headers
     key = req.headers.get("x-pfy-key")
     if not key:
         return {"topic": "无权访问"}
-
-    current_time = time.time()
     
-    # 检查并清理过期状态（超过60秒的请求状态）
+    current_time = time.time()
+
+    # 清理过期状态和锁
+    cleanup_expired_locks()
+    
+    # 检查是否有正在进行的请求
     if key in _request_states:
         if current_time - _request_states[key] < 60:
             return {"topic": "已有任务在进行，请等待结束后再操作"}
         else:
-            # 自动清理超时的状态
             del _request_states[key]
     
     try:
-        _request_states[key] = current_time
+        # 获取或创建锁
+        if key not in _locks:
+            _locks[key] = asyncio.Lock()
         
-        # Get or create lock for this key
-        lock = asyncio.Lock()
+        # 使用异步上下文管理器来确保锁的正确获取和释放
+        async with asyncio.timeout(60):
+            async with _locks[key]:
+                _request_states[key] = current_time
+                
+                prompt = prompt_templates.get(item)
+                if ctx.discipline and (ctx.discipline == "" or ctx.discipline == "yuwen"):
+                    prompt = yuwen_prompt_templates.get(item)
 
-        # Try to acquire the lock
-        if not await lock.acquire():
-            return {"topic": "已有任务在进行，请等待结束后再操作"}
+                if prompt:
+                    if (
+                        item in ["topic_answer", "topic_analysis"]
+                        and ctx.image_data
+                        and ctx.image_data.strip() != ""
+                        and ctx.discipline
+                        and (ctx.discipline == "" or ctx.discipline != "yuwen")
+                    ):
+                        # text = dify_math_run(ctx, key)
+                        run_prompt = gen_prompt(ctx, prompt)
+                        text = ark_run(run_prompt, ctx)
 
-        prompt = prompt_templates.get(item)
-        if ctx.discipline and (ctx.discipline == "" or ctx.discipline == "yuwen"):
-            prompt = yuwen_prompt_templates.get(item)
-
-        if prompt:
-            if (
-                item in ["topic_answer", "topic_analysis"]
-                and ctx.image_data
-                and ctx.image_data.strip() != ""
-                and ctx.discipline
-                and (ctx.discipline == "" or ctx.discipline != "yuwen")
-            ):
-                # text = dify_math_run(ctx, key)
-                run_prompt = gen_prompt(ctx, prompt)
-                text = ark_run(run_prompt, ctx)
-
-                return {"topic": remove_empty_lines_from_string(text)}
-            run_prompt = gen_prompt(ctx, prompt)
-            llm_fun = gemini_run
-            if llm_provide == deepseek_provide:
-                llm_fun = deepseek_run
-            if llm_provide == ark_provide:
-                run_prompt = gen_prompt(ctx, prompt)
-                text = ark_run(run_prompt, ctx)
-                return {"topic": remove_empty_lines_from_string(text)}
-            log.debug(run_prompt)
-            text = llm_fun(run_prompt, ctx)
-            # log.info(deepseek_math_fromat(text))
-            return {"topic": remove_empty_lines_from_string(text)}
-        else:
-            return {"msg": "Unsupported parameters"}
+                        return {"topic": remove_empty_lines_from_string(text)}
+                    run_prompt = gen_prompt(ctx, prompt)
+                    llm_fun = gemini_run
+                    if llm_provide == deepseek_provide:
+                        llm_fun = deepseek_run
+                    if llm_provide == ark_provide:
+                        run_prompt = gen_prompt(ctx, prompt)
+                        text = ark_run(run_prompt, ctx)
+                        return {"topic": remove_empty_lines_from_string(text)}
+                    log.debug(run_prompt)
+                    text = llm_fun(run_prompt, ctx)
+                    # log.info(deepseek_math_fromat(text))
+                    return {"topic": remove_empty_lines_from_string(text)}
+                else:
+                    return {"msg": "Unsupported parameters"}
+    except asyncio.TimeoutError:
+        return {"topic": "超时，请稍后重试"}
     finally:
-        # 清理状态
-        _request_states.pop(key, None)
-        lock.release()
+        # 清理不再需要的锁
+        if key in _locks and not _locks[key].locked():
+            del _locks[key]
+        if key in _request_states:
+            del _request_states[key]
 
 
 @app.post("/llm/ocr")
@@ -226,42 +249,47 @@ async def ocr(ctx: OCRContext, req: Request):
     key = req.headers.get("x-pfy-key")
     if not key:
         return {"topic": "无权访问"}
-
+        
     current_time = time.time()
+
+    # 清理过期状态和锁
+    cleanup_expired_locks()
     
-    # 检查并清理过期状态（超过60秒的请求状态）
+    # 检查是否有正在进行的请求
     if key in _request_states:
         if current_time - _request_states[key] < 60:
             return {"topic": "已有任务在进行，请等待结束后再操作"}
         else:
-            # 自动清理超时的状态
             del _request_states[key]
-
+            
     try:
-        _request_states[key] = current_time
+        # 获取或创建锁
+        if key not in _locks:
+            _locks[key] = asyncio.Lock()
         
-        # Get or create lock for this key
-        lock = asyncio.Lock()
-
-        # Try to acquire the lock
-        if not await lock.acquire():
-            return {"topic": "已有任务在进行，请等待结束后再操作"}
-
-        text = ""
-        if llm_provide == ark_provide:
-            text = ark_ocr(ctx)
-        else:
-            tf = save_base64_image(ctx.image_data)
-            text = gemini_ocr(tf)
-            os.remove(tf)
-        return {"text": text}
+        # 使用异步上下文管理器来确保锁的正确获取和释放
+        async with asyncio.timeout(60):
+            async with _locks[key]:
+                _request_states[key] = current_time
+                
+                text = ""
+                if llm_provide == ark_provide:
+                    text = ark_ocr(ctx)
+                else:
+                    tf = save_base64_image(ctx.image_data)
+                    text = gemini_ocr(tf)
+                    os.remove(tf)
+                return {"text": text}
+                
+    except asyncio.TimeoutError:
+        return {"topic": "超时，请稍后重试"}
     except Exception as e:
         log.error(f"ocr: {e}")
         return {"text": text}
     finally:
-        # Always release the lock
-        lock.release()
-        # 清理请求状态
+        # 清理不再需要的锁
+        if key in _locks and not _locks[key].locked():
+            del _locks[key]
         if key in _request_states:
             del _request_states[key]
 
